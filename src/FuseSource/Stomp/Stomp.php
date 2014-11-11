@@ -489,6 +489,40 @@ class Stomp
         }
     }
     /**
+     * Not Acknowledge consumption of a message from a subscription
+	 * Note: This operation is always asynchronous
+     *
+     * @param string|Frame $messageMessage ID
+     * @param string $transactionId
+     * @return boolean
+     * @throws StompException
+     */
+    public function nack ($message, $transactionId = null)
+    {
+        if ($message instanceof Frame) {
+            $headers = $message->headers;
+            if (isset($transactionId)) {
+                $headers['transaction'] = $transactionId;
+            }
+
+            if ($this->brokerVendor == 'RMQ') {
+                unset($headers['content-length']);
+            }
+            $frame = new Frame('NACK', $headers);
+            $this->_writeFrame($frame);
+            return true;
+        } else {
+            $headers = array();
+            if (isset($transactionId)) {
+                $headers['transaction'] = $transactionId;
+            }
+            $headers['message-id'] = $message;
+            $frame = new Frame('NACK', $headers);
+            $this->_writeFrame($frame);
+            return true;
+        }
+    }
+    /**
      * Graceful disconnect from the server
      *
      */
